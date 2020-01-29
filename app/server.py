@@ -15,10 +15,10 @@ export_file_name = 'export.pkl'
 
 path = Path(__file__).parent
 
-with open(path/'app/classes.txt','r') as f:
+with open(path/'classes.txt','r') as f:
     classes=f.read().split()
 
-with open(path/'app/response_data.json','r') as f:
+with open(path/'response_data.json','r') as f:
     response_data = json.load(f)
     
 
