@@ -8,17 +8,23 @@ from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
+import json
 
-export_file_url = 'https://drive.google.com/uc?export=download&id=1-IqC-jNoWs6Ylc5W9RRK58q8WY1ERErj'
+export_file_url = 'https://drive.google.com/uc?export=download&id=1P4BVCUSd36pWUElqFEXlINInsYFkFU7f'
 export_file_name = 'export.pkl'
 
-classes = ['human','logo']
 path = Path(__file__).parent
+
+with open(path/'app/classes.txt','r') as f:
+    classes=f.read().split()
+
+with open(path/'app/response_data.json','r') as f:
+    response_data = json.load(f)
+    
 
 app = Starlette()
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_headers=['X-Requested-With', 'Content-Type'])
 app.mount('/static', StaticFiles(directory='app/static'))
-
 
 async def download_file(url, dest):
     if dest.exists(): return
@@ -27,7 +33,6 @@ async def download_file(url, dest):
             data = await response.read()
             with open(dest, 'wb') as f:
                 f.write(data)
-
 
 async def setup_learner():
     print('Downloading model + parameters')
@@ -44,12 +49,10 @@ async def setup_learner():
         else:
             raise
 
-
 loop = asyncio.get_event_loop()
 tasks = [asyncio.ensure_future(setup_learner())]
 learn = loop.run_until_complete(asyncio.gather(*tasks))[0]
 loop.close()
-
 
 @app.route('/')
 async def homepage(request):
@@ -63,7 +66,7 @@ async def analyze(request):
     img_bytes = await (img_data['file'].read())
     img = open_image(BytesIO(img_bytes))
     prediction = learn.predict(img)[0]
-    return JSONResponse({'result': str(prediction)})
+    return JSONResponse({'result': str(prediction), 'data':response_data.get(str(prediction))})
 
 
 if __name__ == '__main__':
